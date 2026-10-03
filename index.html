@@ -1,157 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>projeto estudo</title>
-
-  <!-- Favicon -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#141414">
+  <meta name="description" content="Projeto de estudo de uma interface de streaming, com catálogo TMDB, trailers e lista pessoal. Desenvolvido por Wesley Tiago.">
+  <title>Netflix — Projeto de estudo</title>
   <link rel="icon" href="https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.ico">
-
+  <link rel="preconnect" href="https://image.tmdb.org">
   <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
 <body>
-
-  <!-- OVERLAY: solicitação da API Key -->
-   
-  <div class="api-overlay" id="apiOverlay">
-    <div class="api-box">
-      <span class="api-logo">NETFLIX</span>
-      <h2>Insira sua chave TMDB</h2>
-      <p>Para carregar filmes e trailers reais, você precisa de uma API Key gratuita do The Movie Database.</p>
-      <input class="api-input" id="apiInput" type="text" placeholder="Cole sua API Key aqui...">
-      <button class="api-submit" id="apiSubmit">Entrar</button>
-      <p class="api-note">
-        Não tem? <a href="https://www.themoviedb.org/settings/api" target="_blank">Crie grátis aqui →</a>
-      </p>
-    </div>
-  </div>  
-  
-
-  <!--NAVBAR-->
-  <nav class="navbar" id="navbar">
+  <a class="skip-link" href="#conteudo">Pular para o catálogo</a>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m7 3 15 9-15 9z"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 10v7m0-11v1"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+    <symbol id="i-like" viewBox="0 0 24 24"><path d="M7 10H3v11h4m0-11 5-8c3 0 2 4 1 7h6c2 0 2 2 2 3l-2 9H7z"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m5 9 7 7 7-7"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M5 19 19 5"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zm5 3h4"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M10 4 5 8H2v8h3l5 4zM15 8l6 8m0-8-6 8"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M10 4 5 8H2v8h3l5 4zm5 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 4-8 8 8 8"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 4 8 8-8 8"/></symbol>
+  </svg>
+  <header class="navbar" id="navbar">
     <div class="navbar-left">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" class="logo" alt="Netflix">
-      <ul class="nav-links">
-        <li><a href="#">Início</a></li>
-        <li><a href="#">Séries</a></li>
-        <li><a href="#">Filmes</a></li>
-        <li><a href="#">Jogos</a></li>
-        <li><a href="#">Bombando</a></li>
-        <li><a href="#">Minha lista</a></li>
-        <li><a href="#">Navegar por idiomas</a></li>
-      </ul>
+      <a class="brand" href="#inicio" data-view="home" aria-label="Netflix, página inicial"><img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" width="100" height="28" alt="Netflix"></a>
+      <nav class="desktop-nav" aria-label="Catálogo"><a href="#inicio" data-view="home" aria-current="page">Início</a><a href="#series" data-view="tv">Séries</a><a href="#filmes" data-view="movie">Filmes</a><a href="#bombando" data-view="trending">Bombando</a><a href="#minha-lista" data-view="list">Minha lista</a></nav>
+      <label class="mobile-nav"><span class="sr-only">Navegar no catálogo</span><select id="mobileNav"><option value="home">Início</option><option value="tv">Séries</option><option value="movie">Filmes</option><option value="trending">Bombando</option><option value="list">Minha lista</option></select></label>
     </div>
     <div class="navbar-right">
-      <!-- Campo de busca dinâmica -->
-      <div class="search-box" id="searchBox">
-        <button class="search-toggle" id="searchToggle"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0,0,256,256" width="20px" height="20px" fill-rule="nonzero"><g fill="#ffffff" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(5.33333,5.33333)"><path d="M20.5,6c-7.99037,0 -14.5,6.50964 -14.5,14.5c0,7.99036 6.50963,14.5 14.5,14.5c3.45636,0 6.63371,-1.22096 9.12891,-3.25l9.81055,9.81055c0.37623,0.39185 0.9349,0.54969 1.46055,0.41265c0.52565,-0.13704 0.93616,-0.54754 1.07319,-1.07319c0.13704,-0.52565 -0.0208,-1.08432 -0.41265,-1.46055l-9.81055,-9.81055c2.02904,-2.4952 3.25,-5.67255 3.25,-9.12891c0,-7.99036 -6.50963,-14.5 -14.5,-14.5zM20.5,9c6.36905,0 11.5,5.13096 11.5,11.5c0,3.10261 -1.2238,5.90572 -3.20898,7.9707c-0.12237,0.08994 -0.23037,0.19794 -0.32031,0.32031c-2.06499,1.98518 -4.86809,3.20898 -7.9707,3.20898c-6.36905,0 -11.5,-5.13096 -11.5,-11.5c0,-6.36904 5.13095,-11.5 11.5,-11.5z"></path></g></g></svg></button>
-        <input class="search-input" id="searchInput" type="text" placeholder="Títulos, pessoas, gêneros">
-      </div>
-
-      <!-- Dropdown de Notificações -->
-      <div class="nav-dropdown notifications">
-        <span class="nav-icon"><img src="Img/sino.png" alt="Bell" width="20" height="20"></span>
-        <div class="dropdown-panel">
-          <div class="dropdown-section-title">Novidades</div>
-          <div class="notification-item">
-            <img src="https://via.placeholder.com/100x75?text=Poster" alt="Poster">
-            <div class="notification-content">
-              <p class="notification-title">Novo filme disponível</p>
-              <span class="notification-time">2h atrás</span>
-            </div>
-          </div>
-          <div class="notification-item">
-            <img src="https://via.placeholder.com/50x75?text=Poster2" alt="Poster">
-            <div class="notification-content">
-              <p class="notification-title">Série renovada</p>
-              <span class="notification-time">1d atrás</span>
-            </div>
-          </div>
-          <div class="notification-item">
-            <img src="https://via.placeholder.com/50x75?text=Poster3" alt="Poster">
-            <div class="notification-content">
-              <p class="notification-title">Lançamento especial</p>
-              <span class="notification-time">3d atrás</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Dropdown de Perfil -->
-      <div class="nav-dropdown profile">
-        <div class="profile-trigger">
-          <div class="avatar">U</div>
-          <span class="profile-caret">▼</span>
-        </div>
-        <div class="dropdown-panel">
-          <div class="profile-item"><span class="profile-avatar profile-avatar--red">W</span> Wesley Tiago</div>
-          <div class="profile-item"><span class="profile-avatar profile-avatar--blue">V</span> Willcany</div>
-          <div class="profile-item"><span class="profile-avatar profile-avatar--orange">K</span> Kids</div>
-          <div class="dropdown-divider"></div>
-          <div class="profile-option">Gerenciar perfis</div>
-          <div class="profile-option">Conta</div>
-          <div class="profile-option">Sair da Netflix</div>
-        </div>
-      </div>
+      <form class="search-box" id="searchBox" role="search"><button class="nav-icon" id="searchToggle" type="button" aria-label="Abrir busca" aria-expanded="false" aria-controls="searchInput"><svg class="icon"><use href="#i-search"/></svg></button><label class="sr-only" for="searchInput">Buscar filmes e séries</label><input id="searchInput" type="search" placeholder="Títulos de filmes e séries" autocomplete="off" maxlength="120" hidden><button class="search-clear" id="searchClear" type="button" aria-label="Limpar busca" hidden><svg class="icon"><use href="#i-close"/></svg></button></form>
+      <div class="nav-dropdown"><button type="button" class="nav-icon" data-dropdown="notificationsPanel" aria-label="Novidades" aria-expanded="false" aria-controls="notificationsPanel"><svg class="icon"><use href="#i-bell"/></svg></button><div class="dropdown-panel notification-panel" id="notificationsPanel" hidden><h2>Novidades no catálogo</h2><div id="notificationsList"><p class="dropdown-empty">Carregando novidades…</p></div></div></div>
+      <div class="nav-dropdown"><button class="profile-trigger" type="button" data-dropdown="profilePanel" aria-label="Perfil de Wesley" aria-expanded="false" aria-controls="profilePanel"><span class="avatar" id="currentAvatar">W</span><svg class="icon caret"><use href="#i-down"/></svg></button><div class="dropdown-panel profile-panel" id="profilePanel" hidden><p class="dropdown-label">Trocar perfil de estudo</p><button class="profile-item" type="button" data-profile="wesley"><span class="avatar">W</span>Wesley Tiago</button><button class="profile-item" type="button" data-profile="willcany"><span class="avatar blue">V</span>Willcany</button><hr><label class="previews-setting"><input type="checkbox" id="autoPreviews">Prévia automática do destaque</label><a href="https://github.com/Wesleyttiago/projeto-streaming-estudo" target="_blank" rel="noopener noreferrer">Sobre este projeto</a></div></div>
     </div>
-  </nav>
-
-  <!-- BILLBOARD (Hero / Destaque) -->
-  <section class="billboard" id="billboard">
-
-    <!-- Poster estático (fallback e início) -->
-    <div class="bill-poster" id="billPoster"></div>
-
-    <!-- Iframe do YouTube para autoplay do trailer -->
-    <iframe
-      id="billIframe"
-      class="bill-iframe"
-      frameborder="0"
-      allow="autoplay; encrypted-media"
-      allowfullscreen>
-    </iframe>
-
-    <!-- Gradiente sobre o vídeo/poster -->
-    <div class="bill-overlay"></div>
-
-    <!-- Conteúdo textual do destaque -->
-    <div class="bill-content">
-      <div class="bill-badge">⭐ &nbsp;Nº 1 no Brasil hoje</div>
-      <h1 class="bill-title" id="billTitle">Carregando...</h1>
-      <div class="bill-meta">
-        <span class="bill-match" id="billMatch"></span>
-        <span id="billYear"></span>
-      </div>
-      <p class="bill-desc" id="billDesc"></p>
-      <div class="bill-btns">
-        <button class="btn btn-play" id="billPlayBtn">▶ &nbsp;Assistir</button>
-        <button class="btn btn-info">ℹ &nbsp;Mais informações</button>
-      </div>
-    </div>
-
-    <!-- Classificação etária + botão mute -->
-    <div class="bill-side">
-      <div class="bill-age" id="billAge">14+</div>
-      <button class="bill-mute" id="muteBtn">🔇</button>
-    </div>
-
-  </section>
-
-  <!--RESULTADOS DE BUSCA-->
-  <section class="search-results hidden" id="searchResults">
-    <h2 class="search-results-title">Resultados da busca</h2>
-    <div class="search-grid" id="searchGrid"></div>
-  </section>
-
-  <!--FILEIRAS DE FILMES / SÉRIES-->
-  <main class="rows" id="rows"></main>
-
-  <!-- Feedback toast -->
-  <div class="toast" id="toast"></div>
-
-  <!-- JavaScript externo -->
-  <script src="script.js"></script>
-
+  </header>
+  <main id="conteudo">
+    <section class="billboard loading" id="billboard" aria-labelledby="billTitle">
+      <img class="bill-poster" id="billPoster" alt="" hidden><div class="bill-video" id="billVideo" aria-hidden="true"></div><div class="bill-overlay"></div>
+      <div class="bill-content"><p class="bill-label" id="billLabel">DESTAQUE DA SEMANA</p><img id="billLogo" class="bill-logo" alt="" hidden><h1 id="billTitle" class="bill-title">Seu próximo<br>favorito está aqui.</h1><p class="bill-highlight" id="billHighlight">Filmes, séries e novas histórias.</p><p id="billDesc" class="bill-desc">Explore o catálogo, descubra os detalhes e assista aos trailers dos títulos que chamarem sua atenção.</p><div class="bill-btns"><button class="btn btn-play" id="billPlayBtn" type="button" disabled><svg class="icon fill"><use href="#i-play"/></svg>Assistir trailer</button><button class="btn btn-info" id="billInfoBtn" type="button" disabled><svg class="icon"><use href="#i-info"/></svg>Mais informações</button></div></div>
+      <div class="bill-side"><button class="round-btn" id="muteBtn" type="button" aria-label="Ativar som da prévia" hidden><svg class="icon"><use href="#i-mute"/></svg></button><span class="bill-age" id="billAge" hidden></span></div>
+    </section>
+    <section class="catalog-page" id="catalogPage" hidden aria-labelledby="catalogTitle"><h1 id="catalogTitle">Catálogo</h1><p id="catalogSubtitle"></p></section>
+    <div class="catalog-status" id="catalogStatus" role="status" hidden></div>
+    <section class="rows" id="rows" aria-label="Fileiras do catálogo" aria-busy="true"></section>
+    <section class="search-results" id="searchResults" aria-labelledby="searchTitle" hidden><h1 id="searchTitle">Resultados da busca</h1><p id="searchStatus" role="status"></p><div class="search-grid" id="searchGrid"></div></section>
+  </main>
+  <footer class="site-footer"><div class="footer-links"><a href="https://github.com/Wesleyttiago/projeto-streaming-estudo" target="_blank" rel="noopener noreferrer">Código no GitHub</a><a href="https://wesleyttiago.github.io/" target="_blank" rel="noopener noreferrer">Portfólio de Wesley</a><button class="footer-button" id="apiSettings" type="button">Configurar catálogo</button></div><p>Projeto educacional de Wesley Tiago, inspirado na interface da Netflix. Sem vínculo com a Netflix. Reprodução de trailers pelo YouTube.</p><a class="tmdb-credit" href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">Dados e imagens: TMDB</a><p class="attribution">Este produto usa a API do TMDB, mas não é endossado ou certificado pelo TMDB.</p></footer>
+  <div class="card-preview" id="cardPreview" hidden></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog class="title-dialog" id="titleDialog" aria-labelledby="modalTitle"><button class="modal-close round-btn" id="modalClose" type="button" aria-label="Fechar detalhes"><svg class="icon"><use href="#i-close"/></svg></button><div class="modal-hero"><img id="modalPoster" alt=""><div class="modal-video" id="modalVideo" hidden></div><div class="modal-shade"></div><div class="modal-hero-content"><h2 id="modalTitle"></h2><div class="modal-actions"><button class="btn btn-play" id="modalPlay" type="button"><svg class="icon fill"><use href="#i-play"/></svg>Assistir trailer</button><button class="round-btn" id="modalList" type="button" aria-label="Adicionar à minha lista" aria-pressed="false"><svg class="icon"><use href="#i-plus"/></svg></button><button class="round-btn" id="modalLike" type="button" aria-label="Gostei deste título" aria-pressed="false"><svg class="icon"><use href="#i-like"/></svg></button></div></div></div><div class="modal-body"><p class="trailer-status" id="trailerStatus" role="status" hidden></p><a class="youtube-link" id="youtubeLink" target="_blank" rel="noopener noreferrer" hidden>Abrir trailer no YouTube</a><div class="modal-columns"><div><div class="modal-meta" id="modalMeta"></div><p id="modalDescription"></p></div><dl class="modal-facts" id="modalFacts"></dl></div><h3>Mais títulos para descobrir</h3><div class="related-grid" id="relatedGrid"></div></div></dialog>
+  <dialog class="api-dialog" id="apiDialog" aria-labelledby="apiTitle"><button class="round-btn api-close" id="apiClose" type="button" aria-label="Fechar configuração"><svg class="icon"><use href="#i-close"/></svg></button><h2 id="apiTitle">Configurar catálogo</h2><p>Uma chave de leitura do TMDB permite carregar filmes, séries e trailers. A chave informada aqui é usada apenas nesta sessão do navegador.</p><form id="apiForm"><label for="apiInput">Chave de API do TMDB (v3)</label><input id="apiInput" type="password" autocomplete="off" required placeholder="Sua chave de leitura"><p id="apiError" role="alert"></p><button class="btn api-submit" type="submit">Salvar e carregar catálogo</button></form><a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer">Obter uma chave no TMDB</a></dialog>
+  <noscript><p class="noscript">Ative o JavaScript para carregar o catálogo e usar a busca.</p></noscript>
 </body>
 </html>
