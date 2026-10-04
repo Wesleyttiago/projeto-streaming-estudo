@@ -110,3 +110,41 @@ test('cancelamento de consulta chega ao fetch', async () => {
   run('controller.abort()');
   await assert.rejects(pending, { name: 'AbortError' });
 });
+
+test('fileira avança cartões inteiros e marca a última página parcial', () => {
+  const { run } = app();
+  const metrics = JSON.parse(run(`JSON.stringify(railMetrics({
+    width: 1000, contentWidth: 2650, itemWidth: 170, gap: 5, gutter: 40, offset: 1650
+  }))`));
+  assert.equal(metrics.step, 875);
+  assert.equal(metrics.max, 1650);
+  assert.equal(metrics.pages, 3);
+  assert.equal(metrics.current, 2);
+});
+
+test('fileira curta tem uma página e não gera deslocamento negativo', () => {
+  const { run } = app();
+  const metrics = JSON.parse(run(`JSON.stringify(railMetrics({
+    width: 320, contentWidth: 280, itemWidth: 110, gap: 5, gutter: 16, offset: 0
+  }))`));
+  assert.equal(metrics.max, 0);
+  assert.equal(metrics.pages, 1);
+  assert.equal(metrics.current, 0);
+});
+
+test('gêneros de séries e filmes usam seus respectivos identificadores', () => {
+  const { run } = app();
+  assert.equal(run("genreOptions('tv').some(g => g.id === 10759)"), true);
+  assert.equal(run("genreOptions('tv').some(g => g.id === 28)"), false);
+  assert.equal(run("genreOptions('movie').some(g => g.id === 28)"), true);
+  assert.equal(run("genreOptions('home').length"), 0);
+});
+
+test('filtro de gênero usa discover e ignora gêneros incompatíveis', () => {
+  const { run } = app();
+  const rows = JSON.parse(run("JSON.stringify(catalogDefinitions('tv', 10759))"));
+  assert.equal(rows.length, 2);
+  assert.ok(rows.every(row => row.path === '/discover/tv' && row.params.with_genres === 10759));
+  assert.equal(run("catalogDefinitions('tv', 28).length"), 6);
+  assert.equal(run("catalogDefinitions('home', 28).length"), 7);
+});

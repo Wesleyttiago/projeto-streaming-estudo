@@ -149,7 +149,7 @@ function createRequestGate() {
 const storedProfile = readStorage('stream-study:profile', 'wesley');
 const state = {
   profile: PROFILES[storedProfile] ? storedProfile : 'wesley',
-  view: 'home', lists: [], likes: new Set(), recent: [],
+  view: 'home', genre: 0, collection: null, lists: [], likes: new Set(), recent: [],
   registry: new Map(), catalogVersion: 0, catalogController: null,
   hero: null, heroVersion: 0, heroPlayer: null, heroVisible: true, muted: true,
   modalItem: null, modalDetails: null, modalVersion: 0, modalController: null,
@@ -291,11 +291,65 @@ function clearRails() {
   state.resizeObserver?.disconnect();
   state.rails.clear();
 }
+function genreOptions(view) {
+  const ids = view === 'tv'
+    ? [10759, 16, 35, 80, 99, 18, 10751, 10762, 9648, 10765, 10764]
+    : view === 'movie' ? [28, 12, 16, 35, 80, 99, 18, 10751, 14, 27, 9648, 10749, 878, 53] : [];
+  return ids.map(id => ({ id, name: GENRES.get(id) }));
+}
+/* Cada avanço percorre cartões inteiros. A última página pode ser menor. */
+function railMetrics({ width, contentWidth, itemWidth, gap = 0, gutter = 0, offset = 0 }) {
+  const stride = Math.max(1, itemWidth + gap);
+  const visible = Math.max(1, Math.floor((Math.max(0, width - gutter * 2) + gap) / stride + .01));
+  const step = visible * stride;
+  const max = Math.max(0, contentWidth - width);
+  const pages = max < 2 ? 1 : Math.ceil(max / step) + 1;
+  const current = max > 0 && offset >= max - 2
+    ? pages - 1 : Math.min(pages - 1, Math.max(0, Math.floor((offset + 1) / step)));
+  return { step, max, pages, current };
+}
+
+function openCollection(label, items, trigger) {
+  const scrollY = window.scrollY;
+  clearSearch(true);
+  state.collection = { scrollY, trigger };
+  state.searching = true;
+  hidePreview(); closeDropdowns(); pauseHero();
+  applyViewVisibility();
+  $('catalogStatus').hidden = true;
+  $('searchResults').hidden = false;
+  $('collectionBack').hidden = false;
+  $('searchTitle').textContent = label;
+  $('searchStatus').textContent = items.length + ' títulos nesta fileira.';
+  $('searchGrid').replaceChildren(...items.map(item => createCard(item)));
+  window.scrollTo({ top: 0, behavior: 'auto' });
+  $('searchTitle').focus({ preventScroll: true });
+}
+
+function closeCollection() {
+  const collection = state.collection;
+  clearSearch(true);
+  if (collection) {
+    window.scrollTo({ top: collection.scrollY, behavior: 'auto' });
+    if (collection.trigger?.isConnected) collection.trigger.focus({ preventScroll: true });
+  }
+}
+
 function buildRow(label, items, options = {}) {
   if (!items.length) return;
   const row = element('section', 'row');
   const header = element('div', 'row-header');
-  header.append(element('h2', 'row-title', label));
+  const heading = element('div', 'row-heading');
+  const title = element('h2', 'row-title', label);
+  title.id = 'row-' + state.catalogVersion + '-' + state.rails.size;
+  row.setAttribute('aria-labelledby', title.id);
+  const explore = element('button', 'row-link', 'Explorar tudo');
+  explore.type = 'button';
+  explore.setAttribute('aria-label', 'Explorar todos os títulos de ' + label);
+  explore.append(icon('right'));
+  explore.addEventListener('click', () => openCollection(label, items, explore));
+  heading.append(title, explore);
+  header.append(heading);
   const counter = element('div', 'row-counter');
   counter.setAttribute('aria-hidden', 'true');
   header.append(counter);
@@ -306,13 +360,20 @@ function buildRow(label, items, options = {}) {
   rail.setAttribute('role', 'group');
   rail.setAttribute('aria-label', label + ' — use as setas ou deslize');
   items.forEach((item, i) => rail.append(createCard(item, { rank: options.ranked ? i + 1 : 0 })));
+  const measure = () => {
+    const style = getComputedStyle(rail);
+    return railMetrics({
+      width: rail.clientWidth, contentWidth: rail.scrollWidth,
+      itemWidth: rail.firstElementChild?.getBoundingClientRect().width || rail.clientWidth,
+      gap: parseFloat(style.columnGap) || 0, gutter: parseFloat(style.paddingLeft) || 0,
+      offset: rail.scrollLeft
+    });
+  };
   const scroll = delta => {
     hidePreview();
-    const max = rail.scrollWidth - rail.clientWidth;
-    const width = rail.clientWidth * .92;
-    const next = delta > 0 && rail.scrollLeft >= max - 2 ? 0 :
-      delta < 0 && rail.scrollLeft <= 2 ? max : rail.scrollLeft + delta * width;
-    rail.scrollTo({ left: Math.max(0, Math.min(max, next)), behavior: motion() });
+    const metrics = measure();
+    const page = (metrics.current + delta + metrics.pages) % metrics.pages;
+    rail.scrollTo({ left: Math.min(metrics.max, page * metrics.step), behavior: motion() });
   };
   const left = actionButton('Títulos anteriores em ' + label, 'left', () => scroll(-1), 'arrow-btn arrow-left');
   const right = actionButton('Próximos títulos em ' + label, 'right', () => scroll(1), 'arrow-btn arrow-right');
@@ -322,10 +383,8 @@ function buildRow(label, items, options = {}) {
   let scheduled = false;
   const update = () => {
     if (!rail.clientWidth) return;
-    const max = Math.max(0, rail.scrollWidth - rail.clientWidth);
+    const { max, pages, current } = measure();
     left.disabled = right.disabled = max < 2;
-    const pages = Math.max(1, Math.ceil(max / (rail.clientWidth * .92)) + 1);
-    const current = Math.min(pages - 1, Math.round(rail.scrollLeft / (rail.clientWidth * .92)));
     counter.replaceChildren(...Array.from({ length: pages }, (_, i) =>
       element('span', i === current ? 'active' : '')));
     scheduled = false;
@@ -357,10 +416,18 @@ function skeletonRows() {
     $('rows').append(row);
   });
 }
-function catalogDefinitions(view) {
+function catalogDefinitions(view, genreId = 0) {
   const genre = (title, type, id) => ({
     title, type, path: '/discover/' + type, params: { with_genres: id, sort_by: 'popularity.desc' }
   });
+  if (genreOptions(view).some(option => option.id === genreId)) {
+    const name = GENRES.get(genreId);
+    return [
+      genre(name + ' em destaque', view, genreId),
+      { title: name + ' — bem avaliados', type: view, path: '/discover/' + view,
+        params: { with_genres: genreId, sort_by: 'vote_average.desc', 'vote_count.gte': 200 } }
+    ];
+  }
   if (view === 'tv') return [
     { title: 'Séries em alta', type: 'tv', path: '/trending/tv/week' },
     { title: 'Séries populares', type: 'tv', path: '/tv/popular' },
@@ -392,10 +459,19 @@ function catalogDefinitions(view) {
 function applyViewVisibility() {
   const showHero = ['home', 'movie', 'tv'].includes(state.view) && !state.searching;
   $('billboard').hidden = !showHero;
+  $('browseToolbar').hidden = !['tv', 'movie'].includes(state.view) || state.searching;
+  $('browseViewTitle').textContent = state.view === 'tv' ? 'Séries' : 'Filmes';
+  const genres = [element('option', '', 'Todos os gêneros'), ...genreOptions(state.view).map(option => {
+    const node = element('option', '', option.name); node.value = String(option.id); return node;
+  })];
+  genres[0].value = '0';
+  $('genreFilter').replaceChildren(...genres);
+  $('genreFilter').value = String(state.genre);
   $('rows').hidden = state.searching;
   $('rows').classList.toggle('flat', !showHero);
   $('catalogPage').hidden = showHero || state.searching;
   const headings = {
+    home: ['Início', 'Explore filmes e séries.'],
     tv: ['Séries', 'Novas histórias, episódio por episódio.'],
     movie: ['Filmes', 'Escolha sua próxima história.'],
     trending: ['Bombando', 'Os títulos em alta no TMDB nesta semana.'],
@@ -404,11 +480,11 @@ function applyViewVisibility() {
   const [title, subtitle] = headings[state.view] || ['Catálogo', 'Explore filmes e séries.'];
   $('catalogTitle').textContent = title;
   $('catalogSubtitle').textContent = subtitle;
-  document.querySelectorAll('.desktop-nav [data-view]').forEach(link => {
+  document.querySelectorAll('.desktop-nav [data-view], .mobile-nav [data-view]').forEach(link => {
     if (link.dataset.view === state.view && !state.searching) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
-  $('mobileNav').value = state.view;
+  $('mobileNav').setAttribute('aria-label', 'Navegar no catálogo; seção atual: ' + title);
   $('navbar').classList.toggle('solid', window.scrollY > 30 || !showHero);
   if (!showHero) pauseHero();
 }
@@ -438,7 +514,7 @@ async function loadCatalog(view = state.view) {
   if (view === 'list') { renderList(); return; }
   $('rows').setAttribute('aria-busy', 'true');
   skeletonRows();
-  const definitions = catalogDefinitions(view);
+  const definitions = catalogDefinitions(view, state.genre);
   const results = await Promise.allSettled(definitions.map(def =>
     api.request(def.path, def.params, { signal: state.catalogController.signal })));
   if (version !== state.catalogVersion) return;
@@ -457,7 +533,7 @@ async function loadCatalog(view = state.view) {
     buildRow(def.title, items);
     if (view === 'home' && i === 0 && state.recent.length)
       buildRow('Explorados recentemente por ' + PROFILES[state.profile].name, state.recent);
-    if (i === 1 && view !== 'trending')
+    if (i === 1 && view !== 'trending' && !state.genre)
       buildRow('Top 10 ' + (view === 'tv' ? 'séries' : 'filmes') + ' populares no TMDB', items.slice(0, 10), { ranked: true });
   });
   $('rows').setAttribute('aria-busy', 'false');
@@ -491,6 +567,7 @@ function showCatalogError(message, retry = false, settings = false) {
 }
 function navigate(view) {
   if (!['home', 'tv', 'movie', 'trending', 'list'].includes(view)) return;
+  if (view !== state.view) state.genre = 0;
   clearSearch(true);
   closeDropdowns();
   const hashes = { home: 'inicio', tv: 'series', movie: 'filmes', trending: 'bombando', list: 'minha-lista' };
@@ -524,11 +601,16 @@ function renderHero(item) {
   $('billAge').hidden = true;
   $('billTitle').textContent = item.title;
   $('billDesc').textContent = item.overview || 'Descubra os detalhes deste título e encontre novas histórias.';
-  $('billLabel').textContent = (item.type === 'tv' ? 'SÉRIE' : 'FILME') + ' EM DESTAQUE';
+  const brand = element('span', 'bill-brand', 'N');
+  brand.setAttribute('aria-hidden', 'true');
+  $('billLabel').replaceChildren(brand, element('span', '', item.type === 'tv' ? 'SÉRIE EM DESTAQUE' : 'FILME EM DESTAQUE'));
   $('billHighlight').textContent = [ratingText(item), item.date.slice(0, 4), genreText(item)].filter(Boolean).join(' · ');
   const poster = $('billPoster');
   poster.hidden = !item.backdrop_path && !item.poster_path;
   poster.src = imageUrl(item.backdrop_path || item.poster_path, 'w1280');
+  const mobilePoster = $('billMobilePoster');
+  if (item.poster_path) mobilePoster.srcset = imageUrl(item.poster_path, 'w780');
+  else mobilePoster.removeAttribute('srcset');
   $('billPlayBtn').disabled = $('billInfoBtn').disabled = false;
   hydrateHero(item, version);
 }
@@ -831,6 +913,8 @@ function clearSearch(close = false) {
   clearTimeout(state.searchTimer);
   state.searchGate.cancel();
   state.searching = false;
+  state.collection = null;
+  $('collectionBack').hidden = true;
   $('searchInput').value = '';
   $('searchResults').hidden = true;
   $('searchGrid').replaceChildren();
@@ -848,6 +932,8 @@ function queueSearch(immediate = false) {
   if (!query) { clearSearch(); return; }
   const ticket = state.searchGate.begin();
   state.searching = true;
+  state.collection = null;
+  $('collectionBack').hidden = true;
   hidePreview(); closeDropdowns(); pauseHero();
   applyViewVisibility();
   $('catalogStatus').hidden = true;
@@ -930,7 +1016,11 @@ function init() {
   document.querySelectorAll('[data-view]').forEach(link => link.addEventListener('click', event => {
     event.preventDefault(); navigate(link.dataset.view);
   }));
-  $('mobileNav').addEventListener('change', event => navigate(event.target.value));
+  $('genreFilter').addEventListener('change', event => {
+    state.genre = Number(event.target.value);
+    loadCatalog();
+  });
+  $('collectionBack').addEventListener('click', closeCollection);
   document.querySelectorAll('[data-dropdown]').forEach(button => button.addEventListener('click', () => {
     const id = button.dataset.dropdown;
     const open = $(id).hidden;
@@ -943,6 +1033,7 @@ function init() {
     if (event.key === 'Escape') { closeDropdowns(); hidePreview(); }
   });
   document.querySelectorAll('[data-profile]').forEach(button => button.addEventListener('click', () => {
+    clearSearch(true);
     state.profile = button.dataset.profile;
     writeStorage('stream-study:profile', state.profile);
     loadProfile(); closeDropdowns(); syncActions();

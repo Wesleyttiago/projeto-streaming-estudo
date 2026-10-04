@@ -8,7 +8,7 @@
   --green: #46d369;
   --gutter: 4vw;
   --columns: 5;
-  --gap: 6px;
+  --gap: 5px;
   --header-height: 68px;
   --ease: cubic-bezier(.2,.7,.3,1);
   color-scheme: dark;
@@ -167,7 +167,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {
 
 .desktop-nav {
   display: flex;
-  gap: 20px;
+  gap: 18px;
   align-items: center;
   white-space: nowrap
 }
@@ -189,18 +189,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {
 
 .mobile-nav {
   display: none
-}
-
-.mobile-nav select {
-  font-size: 14px;
-  background: transparent;
-  border: 0;
-  padding: 8px 20px 8px 5px;
-  color: white
-}
-
-.mobile-nav option {
-  background: #141414
 }
 
 .nav-icon {
@@ -279,14 +267,39 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {
   border-radius: 4px;
   align-items: center;
   justify-content: center;
-  background: #c62d35;
-  font-size: 18px;
+  position: relative;
+  background: #0879c9;
+  font-size: 0;
   font-weight: 700;
   flex-shrink: 0
 }
 
 .avatar.blue {
-  background: #2874b5
+  background: #d56a1a
+}
+
+.avatar::before {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: white;
+  left: 7px;
+  top: 9px;
+  box-shadow: 14px 0 white
+}
+
+.avatar::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  width: 20px;
+  height: 10px;
+  border-bottom: 2px solid white;
+  border-radius: 0 0 50% 50%;
+  transform: rotate(-8deg)
 }
 
 .caret {
@@ -439,7 +452,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {
 /* A imagem fica visível até o evento real de reprodução do YouTube. */
 .billboard {
   position: relative;
-  min-height: 640px;
+  min-height: 580px;
   height: 56.25vw;
   max-height: 880px;
   background: #202020;
@@ -450,13 +463,18 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {
   background: linear-gradient(110deg,#202020,#0b0b0b)
 }
 
+.bill-artwork {
+  position: absolute;
+  inset: 0;
+}
+
 .bill-poster {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top
+  object-position: 65% center
 }
 
 .bill-video {
@@ -492,17 +510,20 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {
 .bill-content {
   position: absolute;
   left: var(--gutter);
-  top: 27%;
-  width: 40%;
+  top: 29%;
+  width: 42%;
   max-width: 580px;
   z-index: 2
 }
 
 .bill-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: .22em;
-  margin-bottom: 18px;
+  letter-spacing: .24em;
+  margin-bottom: 14px;
   text-shadow: 0 2px 8px #000
 }
 
@@ -649,7 +670,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {
 }
 
 .row {
-  margin-bottom: 42px;
+  margin-bottom: 3.2vw;
   position: relative
 }
 
@@ -659,11 +680,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {
   align-items: center;
   gap: 15px;
   padding: 0 var(--gutter);
-  margin-bottom: 12px
+  margin-bottom: 10px
 }
 
 .row-title {
-  font-size: clamp(18px,1.6vw,25px);
+  font-size: clamp(18px,1.45vw,23px);
   font-weight: 700;
   line-height: 1.2
 }
@@ -673,6 +694,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {
   color: #54b9c5;
   background: none;
   border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  white-space: nowrap;
   padding: 5px 0;
   opacity: 0;
   transition: opacity .2s
@@ -762,10 +788,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 24px 12px 9px;
+  padding: 28px 10px 8px;
   background: linear-gradient(transparent,#000b);
   font-size: clamp(12px,.95vw,15px);
-  font-weight: 600;
+  font-weight: 750;
   line-height: 1.25;
   text-shadow: 0 1px 3px #000
 }
@@ -1388,7 +1414,34 @@ body.dialog-open {
   z-index: 100
 }
 
-@media(min-width:1600px) {
+/* Navegação, identidade do destaque e categorias. */
+.mobile-button-label { display: none }
+.bill-brand { color: #e50914; font-size: 30px; font-weight: 900; font-style: italic; line-height: 1; letter-spacing: -.12em; text-shadow: 1px 1px #790009 }
+.mobile-nav-trigger { display: flex; align-items: center; gap: 6px; padding: 8px 0; min-height: 44px; background: none; border: 0; font-size: 13px; font-weight: 600 }
+.mobile-nav-panel { left: 0; right: auto; min-width: 190px; padding-block: 10px }
+.mobile-nav-panel::before { left: 24px; right: auto }
+.mobile-nav-panel a { display: block; padding: 11px 20px; font-size: 14px; color: #b3b3b3 }
+.mobile-nav-panel a:hover { background: #ffffff14; color: white }
+.mobile-nav-panel a[aria-current] { color: white; font-weight: 700 }
+.mobile-nav-trigger[aria-expanded=true] .caret { transform: rotate(180deg) }
+.browse-toolbar { position: absolute; top: calc(var(--header-height) + 22px); left: var(--gutter); right: var(--gutter); z-index: 4; display: flex; align-items: center; gap: 24px }
+.browse-toolbar h2 { font-size: 32px; font-weight: 600; line-height: 1.2 }
+.genre-control select { max-width: 230px; padding: 8px 30px 8px 12px; border: 1px solid #aaa; background: #141414d9; color: white; font-size: 14px }
+.genre-control option { background: #141414 }
+.row-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 12px; min-width: 0 }
+.row-link .icon { width: 14px; height: 14px }
+.collection-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-bottom: 22px; padding: 4px 0; border: 0; background: none; color: #b3b3b3; font-size: 14px }
+.collection-back:hover { color: white }
+.collection-back .icon { width: 18px; height: 18px }
+.search-results h1 { overflow-wrap: anywhere }
+@media(max-width:600px) {
+  .browse-toolbar { top: calc(var(--header-height) + 24px); left: calc(var(--gutter) + 12px); right: calc(var(--gutter) + 12px); gap: 12px }
+  .browse-toolbar h2 { font-size: 22px }
+  .genre-control select { max-width: 180px; font-size: 12px; padding: 6px 8px; min-height: 36px }
+  .bill-brand { font-size: 24px }
+}
+
+@media(min-width:1400px) {
   :root {
     --columns: 6
   }
@@ -1540,17 +1593,14 @@ body.dialog-open {
   .avatar {
     width: 28px;
     height: 28px;
-    font-size: 16px
+    font-size: 0
   }
+
+  .avatar::before { left: 6px; top: 8px; box-shadow: 12px 0 white }
+  .avatar::after { left: 5px; bottom: 5px; width: 18px }
 
   .navbar-right>.nav-dropdown:first-of-type {
     display: none
-  }
-
-  .mobile-nav select {
-    font-size: 12px;
-    max-width: 100px;
-    padding-right: 5px
   }
 
   .navbar.searching .mobile-nav {
@@ -1578,13 +1628,22 @@ body.dialog-open {
   }
 
   .billboard {
-    min-height: 620px;
-    height: 94vh;
-    max-height: 760px
+    min-height: 560px;
+    height: 90vh;
+    height: 90svh;
+    max-height: 780px
+  }
+
+  .bill-artwork {
+    inset: calc(var(--header-height) + 12px) var(--gutter) 84px;
+    overflow: hidden;
+    border: 1px solid #ffffff24;
+    border-radius: 12px;
+    background: #202020
   }
 
   .bill-poster {
-    object-position: 65% top
+    object-position: center 25%
   }
 
   .bill-overlay {
@@ -1594,33 +1653,38 @@ body.dialog-open {
   .bill-content {
     width: 90%;
     top: auto;
-    bottom: 155px;
-    max-width: 480px
+    bottom: 138px;
+    max-width: 480px;
+    text-align: center
   }
 
   .bill-label {
     font-size: 10px;
-    margin-bottom: 14px
+    margin-bottom: 12px;
+    justify-content: center
   }
 
   .bill-title {
-    font-size: 44px;
-    margin-bottom: 18px;
+    font-size: clamp(30px,8vw,44px);
+    margin: 0 auto 16px;
     max-width: 350px
   }
 
   .bill-logo {
-    max-width: 75%;
+    max-width: 80%;
     max-height: 115px;
-    margin-bottom: 20px
+    margin: 0 auto 16px;
+    object-position: center
   }
 
   .bill-highlight {
-    font-size: 16px;
-    margin-bottom: 10px
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 16px
   }
 
   .bill-desc {
+    display: none;
     font-size: 16px;
     line-height: 1.45;
     -webkit-line-clamp: 2;
@@ -1640,11 +1704,15 @@ body.dialog-open {
   }
 
   .bill-btns {
-    gap: 9px
+    gap: 9px;
+    justify-content: center
   }
 
+  .desktop-button-label { display: none }
+  .mobile-button-label { display: inline }
+
   .bill-side {
-    bottom: 124px
+    bottom: 97px
   }
 
   .bill-age {
@@ -1681,8 +1749,12 @@ body.dialog-open {
   }
 
   .row-link {
-    display: none
+    display: inline-flex;
+    opacity: 1;
+    font-size: 11px
   }
+
+  .row-counter { display: none }
 
   .arrow-btn {
     display: none

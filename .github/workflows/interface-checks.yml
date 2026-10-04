@@ -1,0 +1,40 @@
+name: Verificar interface
+on:
+  push:
+    branches: [main]
+    paths: ['index.html', 'style.css', 'script.js', 'tests/**', '.github/workflows/interface-checks.yml']
+  pull_request:
+    paths: ['index.html', 'style.css', 'script.js', 'tests/**', '.github/workflows/interface-checks.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxe e testes do catálogo
+        run: |
+          node --check script.js
+          node --test tests/catalog.test.cjs
+      - name: Preparar navegador de teste
+        run: |
+          npm install --prefix "$RUNNER_TEMP/stream-study-checks" --no-save playwright
+          "$RUNNER_TEMP/stream-study-checks/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Verificar interface de 320 a 1440 px
+        env:
+          NODE_PATH: ${{ runner.temp }}/stream-study-checks/node_modules
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 > "$RUNNER_TEMP/stream-study-server.log" 2>&1 &
+          node tests/browser.check.cjs
+      - name: Guardar captura em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: falha-interface
+          path: browser-artifacts/
+          if-no-files-found: ignore

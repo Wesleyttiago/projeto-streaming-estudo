@@ -8,8 +8,8 @@
   <title>Netflix — Projeto de estudo</title>
   <link rel="icon" href="https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.ico">
   <link rel="preconnect" href="https://image.tmdb.org">
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
+  <link rel="stylesheet" href="style.css?v=interface-20261004">
+  <script src="script.js?v=interface-20261004" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o catálogo</a>
@@ -32,7 +32,16 @@
     <div class="navbar-left">
       <a class="brand" href="#inicio" data-view="home" aria-label="Netflix, página inicial"><img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" width="100" height="28" alt="Netflix"></a>
       <nav class="desktop-nav" aria-label="Catálogo"><a href="#inicio" data-view="home" aria-current="page">Início</a><a href="#series" data-view="tv">Séries</a><a href="#filmes" data-view="movie">Filmes</a><a href="#bombando" data-view="trending">Bombando</a><a href="#minha-lista" data-view="list">Minha lista</a></nav>
-      <label class="mobile-nav"><span class="sr-only">Navegar no catálogo</span><select id="mobileNav"><option value="home">Início</option><option value="tv">Séries</option><option value="movie">Filmes</option><option value="trending">Bombando</option><option value="list">Minha lista</option></select></label>
+      <div class="nav-dropdown mobile-nav">
+        <button class="mobile-nav-trigger" id="mobileNav" type="button" data-dropdown="mobileNavPanel" aria-expanded="false" aria-controls="mobileNavPanel">Navegar<svg class="icon caret"><use href="#i-down"/></svg></button>
+        <nav class="dropdown-panel mobile-nav-panel" id="mobileNavPanel" aria-label="Catálogo no celular" hidden>
+          <a href="#inicio" data-view="home" aria-current="page">Início</a>
+          <a href="#series" data-view="tv">Séries</a>
+          <a href="#filmes" data-view="movie">Filmes</a>
+          <a href="#bombando" data-view="trending">Bombando</a>
+          <a href="#minha-lista" data-view="list">Minha lista</a>
+        </nav>
+      </div>
     </div>
     <div class="navbar-right">
       <form class="search-box" id="searchBox" role="search"><button class="nav-icon" id="searchToggle" type="button" aria-label="Abrir busca" aria-expanded="false" aria-controls="searchInput"><svg class="icon"><use href="#i-search"/></svg></button><label class="sr-only" for="searchInput">Buscar filmes e séries</label><input id="searchInput" type="search" placeholder="Títulos de filmes e séries" autocomplete="off" maxlength="120" hidden><button class="search-clear" id="searchClear" type="button" aria-label="Limpar busca" hidden><svg class="icon"><use href="#i-close"/></svg></button></form>
@@ -41,15 +50,19 @@
     </div>
   </header>
   <main id="conteudo">
+    <div class="browse-toolbar" id="browseToolbar" hidden>
+      <h2 id="browseViewTitle">Filmes</h2>
+      <label class="genre-control" for="genreFilter"><span class="sr-only">Filtrar catálogo por gênero</span><select id="genreFilter"><option value="0">Todos os gêneros</option></select></label>
+    </div>
     <section class="billboard loading" id="billboard" aria-labelledby="billTitle">
-      <img class="bill-poster" id="billPoster" alt="" hidden><div class="bill-video" id="billVideo" aria-hidden="true"></div><div class="bill-overlay"></div>
-      <div class="bill-content"><p class="bill-label" id="billLabel">DESTAQUE DA SEMANA</p><img id="billLogo" class="bill-logo" alt="" hidden><h1 id="billTitle" class="bill-title">Seu próximo<br>favorito está aqui.</h1><p class="bill-highlight" id="billHighlight">Filmes, séries e novas histórias.</p><p id="billDesc" class="bill-desc">Explore o catálogo, descubra os detalhes e assista aos trailers dos títulos que chamarem sua atenção.</p><div class="bill-btns"><button class="btn btn-play" id="billPlayBtn" type="button" disabled><svg class="icon fill"><use href="#i-play"/></svg>Assistir trailer</button><button class="btn btn-info" id="billInfoBtn" type="button" disabled><svg class="icon"><use href="#i-info"/></svg>Mais informações</button></div></div>
+      <picture class="bill-artwork"><source id="billMobilePoster" media="(max-width: 600px)"><img class="bill-poster" id="billPoster" alt="" fetchpriority="high" hidden></picture><div class="bill-video" id="billVideo" aria-hidden="true"></div><div class="bill-overlay"></div>
+      <div class="bill-content"><p class="bill-label" id="billLabel">DESTAQUE DA SEMANA</p><img id="billLogo" class="bill-logo" alt="" hidden><h1 id="billTitle" class="bill-title">Seu próximo<br>favorito está aqui.</h1><p class="bill-highlight" id="billHighlight">Filmes, séries e novas histórias.</p><p id="billDesc" class="bill-desc">Explore o catálogo, descubra os detalhes e assista aos trailers dos títulos que chamarem sua atenção.</p><div class="bill-btns"><button class="btn btn-play" id="billPlayBtn" type="button" disabled><svg class="icon fill"><use href="#i-play"/></svg>Assistir trailer</button><button class="btn btn-info" id="billInfoBtn" type="button" disabled><svg class="icon"><use href="#i-info"/></svg><span class="desktop-button-label">Mais informações</span><span class="mobile-button-label">Detalhes</span></button></div></div>
       <div class="bill-side"><button class="round-btn" id="muteBtn" type="button" aria-label="Ativar som da prévia" hidden><svg class="icon"><use href="#i-mute"/></svg></button><span class="bill-age" id="billAge" hidden></span></div>
     </section>
     <section class="catalog-page" id="catalogPage" hidden aria-labelledby="catalogTitle"><h1 id="catalogTitle">Catálogo</h1><p id="catalogSubtitle"></p></section>
     <div class="catalog-status" id="catalogStatus" role="status" hidden></div>
     <section class="rows" id="rows" aria-label="Fileiras do catálogo" aria-busy="true"></section>
-    <section class="search-results" id="searchResults" aria-labelledby="searchTitle" hidden><h1 id="searchTitle">Resultados da busca</h1><p id="searchStatus" role="status"></p><div class="search-grid" id="searchGrid"></div></section>
+    <section class="search-results" id="searchResults" aria-labelledby="searchTitle" hidden><button class="collection-back" id="collectionBack" type="button" hidden><svg class="icon"><use href="#i-left"/></svg>Voltar às fileiras</button><h1 id="searchTitle" tabindex="-1">Resultados da busca</h1><p id="searchStatus" role="status"></p><div class="search-grid" id="searchGrid"></div></section>
   </main>
   <footer class="site-footer"><div class="footer-links"><a href="https://github.com/Wesleyttiago/projeto-streaming-estudo" target="_blank" rel="noopener noreferrer">Código no GitHub</a><a href="https://wesleyttiago.github.io/" target="_blank" rel="noopener noreferrer">Portfólio de Wesley</a><button class="footer-button" id="apiSettings" type="button">Configurar catálogo</button></div><p>Projeto educacional de Wesley Tiago, inspirado na interface da Netflix. Sem vínculo com a Netflix. Reprodução de trailers pelo YouTube.</p><a class="tmdb-credit" href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">Dados e imagens: TMDB</a><p class="attribution">Este produto usa a API do TMDB, mas não é endossado ou certificado pelo TMDB.</p></footer>
   <div class="card-preview" id="cardPreview" hidden></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
